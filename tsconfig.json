@@ -13,10 +13,9 @@
     "noEmit": true,
     "ignoreDeprecations": "6.0",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/renderer/*"],
-      "@shared/*": ["./src/shared/*"]
+      "@/*": ["${configDir}/src/renderer/*"],
+      "@shared/*": ["${configDir}/src/shared/*"]
     }
   },
   "include": ["./src/renderer/**/*", "./src/shared/**/*"],
