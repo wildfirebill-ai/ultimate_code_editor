@@ -66,5 +66,5 @@ scripts/        Extension data processing
 
 ## License
 
-MIT — see [LICENSE](license/LICENSE). Third-party component licenses
-are listed in [THIRD-PARTY-LICENSES.md](license/THIRD-PARTY-LICENSES.md).
+MIT — see [LICENSE](./license/LICENSE). Third-party component licenses
+are listed in [THIRD-PARTY-LICENSES.md](./license/THIRD-PARTY-LICENSES.md).
