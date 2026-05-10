@@ -1,14 +1,21 @@
 # Ultimate Editor
 
-A production-ready Electron code editor combining the best features from VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
+A production-ready Electron code editor combining the best features from
+VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 
 ## Features
 
-- **Monaco Editor** — full VS Code editing experience with syntax highlighting for 100+ languages
-- **AI Agent** — autonomous coding agent with multi-provider AI (OpenAI, Anthropic, Ollama, Groq, and 15+ more) that can chat, read/write files, run commands, and execute code
-- **Extension Marketplace** — 1834 real VS Code extensions across 27 official categories, with detail popups and install/uninstall buttons
+- **Monaco Editor** — full VS Code editing experience with syntax
+  highlighting for 100+ languages
+- **AI Agent** — autonomous coding agent with multi-provider AI
+  (OpenAI, Anthropic, Ollama, Groq, and 15+ more) that can chat,
+  read/write files, run commands, and execute code
+- **Extension Marketplace** — 1834 real VS Code extensions across
+  27 official categories, with detail popups and install/uninstall
+  buttons
 - **Integrated Terminal** — full xterm.js terminal with PowerShell support
-- **File Explorer** — tree-based file navigation with create/rename/delete context menu
+- **File Explorer** — tree-based file navigation with
+  create/rename/delete context menu
 - **Git Integration** — status, diff, staging, and commit workflow
 - **Command Palette** — quick access to all editor actions
 - **Split Layout** — resizable sidebar, editor, terminal, and agent panels
@@ -59,4 +66,5 @@ scripts/        Extension data processing
 
 ## License
 
-MIT — see [LICENSE](license/LICENSE). Third-party component licenses are listed in [THIRD-PARTY-LICENSES.md](license/THIRD-PARTY-LICENSES.md).
+MIT — see [LICENSE](license/LICENSE). Third-party component licenses
+are listed in [THIRD-PARTY-LICENSES.md](license/THIRD-PARTY-LICENSES.md).
