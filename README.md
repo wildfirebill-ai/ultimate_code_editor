@@ -5,8 +5,7 @@ A production-ready Electron code editor combining the best features from VS Code
 ## Features
 
 - **Monaco Editor** — full VS Code editing experience with syntax highlighting for 100+ languages
-- **AI Chat** — multi-provider AI assistant (OpenAI, Anthropic, Ollama, Groq, and 15+ more)
-- **Agent Mode** — autonomous coding agent that can read/write files, run commands, and execute code
+- **AI Agent** — autonomous coding agent with multi-provider AI (OpenAI, Anthropic, Ollama, Groq, and 15+ more) that can chat, read/write files, run commands, and execute code
 - **Extension Marketplace** — 1834 real VS Code extensions across 27 official categories, with detail popups and install/uninstall buttons
 - **Integrated Terminal** — full xterm.js terminal with PowerShell support
 - **File Explorer** — tree-based file navigation with create/rename/delete context menu
