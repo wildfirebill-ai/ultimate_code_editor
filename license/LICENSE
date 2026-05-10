@@ -1,0 +1,67 @@
+MIT License
+
+Copyright (c) 2026 Wildfirebill
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--- Third-Party Notices ---
+
+This software incorporates components from third-party open source projects.
+The following notices apply to the respective dependencies and extensions:
+
+1. NPM DEPENDENCIES
+This application uses various npm packages, each distributed under its own
+license. The licenses for these dependencies can be found in the
+node_modules/ directory under each package's LICENSE file, or at the
+package's repository. Key dependencies include but are not limited to:
+  - Electron (MIT) - https://github.com/electron/electron
+  - React (MIT) - https://github.com/facebook/react
+  - Monaco Editor (MIT) - https://github.com/microsoft/monaco-editor
+  - Vite (MIT) - https://github.com/vitejs/vite
+  - Zustand (MIT) - https://github.com/pmndrs/zustand
+  - TypeScript (Apache-2.0) - https://github.com/microsoft/TypeScript
+  - Lucide React (ISC) - https://github.com/lucide-icons/lucide
+  - PrismJS (MIT) - https://github.com/PrismJS/prism
+  - xterm.js (MIT) - https://github.com/xtermjs/xterm.js
+  - electron-builder (MIT) - https://github.com/electron-userland/electron-builder
+
+A complete listing of all npm dependencies with their licenses and
+repository URLs is available in THIRD-PARTY-LICENSES.md.
+Full license texts are available in the node_modules/ directory
+under each package's LICENSE file.
+
+2. ELECTRON AND CHROMIUM
+This application is built on Electron, which includes Chromium
+and Node.js. Electron's license can be found at:
+  - LICENSE.electron.txt (distributed with the application)
+  - LICENSES.chromium.html (distributed with the application)
+
+3. EXTENSIONS / MARKETPLACE CONTENT
+Extensions discoverable through the application's marketplace are
+third-party works governed by their own licenses and terms of use.
+A complete listing of all extensions with their license types and
+marketplace URLs is available in THIRD-PARTY-LICENSES.md.
+The Ultimate Editor project does not claim ownership of or provide
+warranty for any third-party extension content. Users are responsible
+for reviewing and complying with the license terms of each extension
+they install.
+
+4. ICONS AND ASSETS
+Application icons and visual assets are original works provided
+under this MIT license unless otherwise noted in the source files.
