@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, Play, Square, Trash2, FileText, Terminal, Search, CheckCircle2, Loader2, AlertCircle, Brain, Pencil, ListTodo, Wrench, Bug, SearchCode, Plus, Save, X, Edit3, ChevronDown, Copy } from 'lucide-react';
-import { useAIStore, AGENT_SYSTEM_PROMPTS, TOOL_INSTRUCTIONS } from '../../stores/aiStore';
+import { Bot, Play, Square, Trash2, FileText, Terminal, Search, CheckCircle2, Loader2, AlertCircle, Brain, Pencil, ListTodo, Wrench, Bug, SearchCode, Plus, Save, X, Edit3, ChevronDown, Copy, RefreshCw, BookOpen, Code, GitPullRequest } from 'lucide-react';
+import { useAIStore, AGENT_SYSTEM_PROMPTS, TOOL_INSTRUCTIONS, BUILTIN_PROMPT_IDS } from '../../stores/aiStore';
 import { useEditorStore } from '../../stores/editorStore';
 import { AgentAction } from '@shared/types';
 
@@ -348,14 +348,19 @@ export default function AgentPanel() {
 
         <div style={{ padding: '6px 12px', borderTop: '1px solid var(--border)', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', gap: 2 }}>
-            {(['plan', 'build', 'debug', 'analyze'] as const).map((mode) => {
+            {BUILTIN_PROMPT_IDS.map((mode) => {
               const icons: Record<string, React.ReactNode> = {
                 plan: <ListTodo size={12} />,
                 build: <Wrench size={12} />,
                 debug: <Bug size={12} />,
                 analyze: <SearchCode size={12} />,
+                refactor: <RefreshCw size={12} />,
+                review: <Code size={12} />,
+                document: <BookOpen size={12} />,
+                test: <CheckCircle2 size={12} />,
+                search: <GitPullRequest size={12} />,
               };
-              const labels: Record<string, string> = { plan: 'Plan', build: 'Build', debug: 'Debug', analyze: 'Analyze' };
+              const labels: Record<string, string> = { plan: 'Plan', build: 'Build', debug: 'Debug', analyze: 'Analyze', refactor: 'Refactor', review: 'Review', document: 'Docs', test: 'Test', search: 'Search' };
               return (
                 <button
                   key={mode}
