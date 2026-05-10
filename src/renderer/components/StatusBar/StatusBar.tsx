@@ -1,13 +1,11 @@
 import React from 'react';
-import { GitBranch, Circle, Terminal, Keyboard, Palette, Brain } from 'lucide-react';
+import { GitBranch, Circle, Terminal, Keyboard, Palette } from 'lucide-react';
 import { useEditorStore } from '../../stores/editorStore';
 import { useSettingsStore } from '../../stores/settingsStore';
-import { useAIStore } from '../../stores/aiStore';
 
 export default function StatusBar() {
   const { tabs, activeTabId, workspacePath, vimMode, toggleVimMode, tabSize } = useEditorStore();
   const { toggleTerminal, theme, setTheme, themes } = useSettingsStore();
-  const { isProcessing, selectedModel, setChatOpen } = useAIStore();
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const folderName = workspacePath
@@ -46,14 +44,6 @@ export default function StatusBar() {
       </div>
 
       <div className="status-bar-right">
-        <div
-          className="status-item"
-          title={`AI Model: ${selectedModel}. Click to toggle chat`}
-          onClick={() => setChatOpen(true)}
-        >
-          <Brain size={12} />
-          <span>{selectedModel}</span>
-        </div>
         {vimMode && (
           <div
             className="status-item"
