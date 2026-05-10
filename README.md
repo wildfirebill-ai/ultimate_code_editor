@@ -21,6 +21,16 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 - **Split Layout** — resizable sidebar, editor, terminal, and agent panels
 - **Cross-Platform** — Windows, macOS, and Linux builds via electron-builder
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Editor](screenshots/editor.png) | ![AI Agent](screenshots/agent.png) |
+| ![Extension Marketplace](screenshots/extensions.png) | ![Integrated Terminal](screenshots/terminal.png) |
+| ![File Explorer](screenshots/explorer.png) | ![Git Integration](screenshots/git.png) |
+| ![Command Palette](screenshots/command-palette.png) | ![Split Layout](screenshots/split-layout.png) |
+| ![Settings](screenshots/settings.png) | ![Dark Theme](screenshots/dark-theme.png) |
+
 ## Tech Stack
 
 - **Runtime:** Electron 42
