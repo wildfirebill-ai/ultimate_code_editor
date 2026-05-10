@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell, screen } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { exec } from 'child_process';
@@ -6,9 +6,10 @@ import { exec } from 'child_process';
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow(): void {
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize;
   mainWindow = new BrowserWindow({
-    width: 1400,
-    height: 900,
+    width: sw,
+    height: sh,
     minWidth: 800,
     minHeight: 600,
     frame: false,

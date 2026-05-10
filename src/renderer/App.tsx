@@ -66,6 +66,7 @@ export default function App() {
 
   useEffect(() => {
     ai.testOllamaConnection();
+    ai.refreshOllamaModels();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
