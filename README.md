@@ -45,6 +45,7 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 
 ## Getting Started
 
+### Local Development
 ```bash
 # Install dependencies
 npm install
@@ -60,6 +61,33 @@ npm run dist:win    # Windows
 npm run dist:mac    # macOS
 npm run dist:linux  # Linux
 ```
+
+### Try in GitHub Codespaces
+
+Click the badge above to open the repo in a Codespace. After the environment is ready:
+
+```bash
+# Start the Vite dev server (auto-runs in Codespaces)
+npm run dev:renderer
+```
+
+The Vite dev server starts on port 5173 — Codespaces will prompt to open it in your browser.
+
+**What works in Codespaces:**
+- Monaco editor UI with syntax highlighting
+- Tab management (open/close/switch files)
+- Welcome screen with Open File / Open Folder / New File buttons
+- Command palette (Ctrl+Shift+P)
+- Split layout rendering
+
+**What does NOT work in Codespaces (requires Electron runtime):**
+- File system operations (reading/writing local files)
+- Git operations (status, diff, commit, push/pull)
+- GitHub integration (token auth, clone, create repo, PR)
+- Integrated terminal (xterm.js requires Node.js IPC)
+- AI agent (requires local process execution)
+- Extension marketplace (requires local file system)
+- Electron title bar and native window controls
 
 ## Project Structure
 
