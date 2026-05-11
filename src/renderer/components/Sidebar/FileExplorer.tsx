@@ -90,8 +90,10 @@ const FileItem: React.FC<FileItemProps> = ({
       setExpanded((p) => !p);
     } else {
       try {
-        const content = await window.electronAPI.fileSystem.readFile(node.path);
-        openFile(node.path, content);
+        const data = await window.electronAPI.fileSystem.readFile(node.path);
+        if (data.content !== undefined) {
+          openFile(node.path, data.content);
+        }
       } catch {
         // ignore
       }
