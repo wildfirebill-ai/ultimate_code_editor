@@ -1,5 +1,7 @@
 # Ultimate Editor
 
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/wildfirebill-ai/ultimate_code_editor)
+
 A production-ready Electron code editor combining the best features from
 VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 
