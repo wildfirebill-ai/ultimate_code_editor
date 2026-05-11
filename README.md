@@ -112,6 +112,12 @@ scripts/        Extension data processing
 - **CSP** — Content Security Policy restricts script sources to `'self'`, `'unsafe-inline'`, and `'unsafe-eval'` (required by Monaco Editor). External images are allowed only from `https://avatars.githubusercontent.com` for GitHub avatars.
 - **IPC Surface** — All file system, git, and GitHub operations are mediated through explicit IPC handlers in the main process. The renderer has no direct access to Node.js APIs.
 
+## Reporting Issues
+
+- **Bug reports** — use the [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md). Include your OS, app version, and steps to reproduce.
+- **Feature requests** — use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md). Describe the problem, your proposed solution, and how it fits with existing features.
+- **Security vulnerabilities** — do not file a public issue. Instead, contact the maintainers directly through the GitHub security advisory process.
+
 ## License
 
 MIT — see [LICENSE](./license/LICENSE). Third-party component licenses
