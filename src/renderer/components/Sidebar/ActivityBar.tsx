@@ -1,5 +1,5 @@
 import React from 'react';
-import { FolderTree, Search, GitBranch, Puzzle, Bot, Settings } from 'lucide-react';
+import { FolderTree, Search, GitBranch, GitPullRequestCreate, Puzzle, Bot, Settings } from 'lucide-react';
 import { useSettingsStore } from '../../stores/settingsStore';
 import { useAIStore } from '../../stores/aiStore';
 
@@ -32,6 +32,13 @@ const ActivityBar: React.FC = () => {
           onClick={() => setActiveSidebarView('git')}
         >
           <GitBranch size={20} />
+        </button>
+        <button
+          className={`activity-btn${activeSidebarView === 'github' ? ' active' : ''}`}
+          title="GitHub"
+          onClick={() => setActiveSidebarView('github')}
+        >
+          <GitPullRequestCreate size={20} />
         </button>
         <button
           className={`activity-btn${activeSidebarView === 'extensions' ? ' active' : ''}`}

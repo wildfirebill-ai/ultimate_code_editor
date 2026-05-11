@@ -37,6 +37,35 @@ const electronAPI = {
     listLocal: (dir: string) => ipcRenderer.invoke('hf-list-local', dir),
   },
 
+  git: {
+    status: (cwd: string) => ipcRenderer.invoke('git-status', cwd),
+    branch: (cwd: string) => ipcRenderer.invoke('git-branch', cwd),
+    log: (cwd: string, count?: number) => ipcRenderer.invoke('git-log', cwd, count),
+    add: (cwd: string, files: string[]) => ipcRenderer.invoke('git-add', cwd, files),
+    unstage: (cwd: string, files: string[]) => ipcRenderer.invoke('git-unstage', cwd, files),
+    commit: (cwd: string, message: string) => ipcRenderer.invoke('git-commit', cwd, message),
+    diff: (cwd: string, filePath: string, staged?: boolean) => ipcRenderer.invoke('git-diff', cwd, filePath, staged),
+    push: (cwd: string, remote: string, branch: string) => ipcRenderer.invoke('git-push', cwd, remote, branch),
+    pull: (cwd: string, remote: string, branch: string) => ipcRenderer.invoke('git-pull', cwd, remote, branch),
+    fetch: (cwd: string) => ipcRenderer.invoke('git-fetch', cwd),
+    remote: (cwd: string) => ipcRenderer.invoke('git-remote', cwd),
+  },
+
+  github: {
+    getToken: () => ipcRenderer.invoke('github-get-token'),
+    setToken: (token: string) => ipcRenderer.invoke('github-set-token', token),
+    validateToken: (token: string) => ipcRenderer.invoke('github-validate-token', token),
+    user: (token: string) => ipcRenderer.invoke('github-user', token),
+    orgs: (token: string) => ipcRenderer.invoke('github-orgs', token),
+    userRepos: (token: string, page?: number) => ipcRenderer.invoke('github-user-repos', token, page),
+    orgRepos: (token: string, org: string) => ipcRenderer.invoke('github-org-repos', token, org),
+    clone: (url: string, destPath: string, token: string) => ipcRenderer.invoke('github-clone', url, destPath, token),
+    createRepo: (token: string, name: string, description: string, isPrivate: boolean) => ipcRenderer.invoke('github-create-repo', token, name, description, isPrivate),
+    createPR: (token: string, owner: string, repo: string, title: string, body: string, head: string, base: string) => ipcRenderer.invoke('github-create-pr', token, owner, repo, title, body, head, base),
+    listPRs: (token: string, owner: string, repo: string) => ipcRenderer.invoke('github-list-prs', token, owner, repo),
+    listBranches: (token: string, owner: string, repo: string) => ipcRenderer.invoke('github-list-branches', token, owner, repo),
+  },
+
   on: (channel: string, callback: (...args: any[]) => void) => {
     const validChannels = ['menu-action', 'window-state-changed', 'ai-response', 'terminal-data', 'git-update'];
     if (validChannels.includes(channel)) {

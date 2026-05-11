@@ -92,7 +92,7 @@ function createMenu(): void {
     {
       label: 'View',
       submenu: [
-        { label: 'Command Palette', accelerator: 'CmdOrCtrl+Shift+P', click: () => mainWindow?.webContents.send('menu-action', 'command-palette') },
+        { label: 'Command Palette', click: () => mainWindow?.webContents.send('menu-action', 'command-palette') },
         { type: 'separator' },
         { label: 'Toggle Sidebar', accelerator: 'CmdOrCtrl+B', click: () => mainWindow?.webContents.send('menu-action', 'toggle-sidebar') },
         { label: 'Toggle Terminal', accelerator: 'CmdOrCtrl+`', click: () => mainWindow?.webContents.send('menu-action', 'toggle-terminal') },
@@ -355,11 +355,332 @@ ipcMain.handle('hf-list-local', async (_event, dir: string) => {
   }
 });
 
+// --- Git IPC Handlers ---
+
+function gitExec(args: string[], cwd: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve) => {
+    exec(`git ${args.join(' ')}`, { cwd, timeout: 15000, maxBuffer: 10 * 1024 * 1024 }, (error, stdout, stderr) => {
+      if (error) {
+        resolve({ stdout, stderr: stderr || error.message, exitCode: error.code ?? 1 });
+      } else {
+        resolve({ stdout, stderr, exitCode: 0 });
+      }
+    });
+  });
+}
+
+ipcMain.handle('git-status', async (_event, cwd: string) => {
+  try {
+    const { stdout, stderr, exitCode } = await gitExec(['status', '--porcelain', '-u'], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    const files = stdout.split('\n').filter(Boolean).map((line) => ({
+      path: line.slice(3).trim(),
+      raw: line.slice(0, 2),
+      staged: line[0] !== ' ' && line[0] !== '?',
+      status: line[0] === '?' ? 'U' : line[1] === 'M' ? 'M' : line[0] === 'M' ? 'M' : line[0] === 'A' ? 'A' : line[0] === 'D' ? 'D' : line[1],
+    }));
+    return { files };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-branch', async (_event, cwd: string) => {
+  try {
+    const { stdout, stderr, exitCode } = await gitExec(['branch', '--show-current'], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { branch: stdout.trim() };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-log', async (_event, cwd: string, count: number = 20) => {
+  try {
+    const { stdout, stderr, exitCode } = await gitExec(['log', `--max-count=${count}`, '--format=%h|%an|%ar|%s'], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    const commits = stdout.split('\n').filter(Boolean).map((line) => {
+      const [hash, author, date, ...msgParts] = line.split('|');
+      return { hash, author, date, message: msgParts.join('|') };
+    });
+    return { commits };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-add', async (_event, cwd: string, filePaths: string[]) => {
+  try {
+    const { stderr, exitCode } = await gitExec(['add', ...filePaths], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-unstage', async (_event, cwd: string, filePaths: string[]) => {
+  try {
+    const { stderr, exitCode } = await gitExec(['reset', 'HEAD', '--', ...filePaths], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-commit', async (_event, cwd: string, message: string) => {
+  try {
+    const { stderr, exitCode } = await gitExec(['commit', '-m', message], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-diff', async (_event, cwd: string, filePath: string, staged: boolean = false) => {
+  try {
+    const args = ['diff'];
+    if (staged) args.push('--cached');
+    args.push('--', filePath);
+    const { stdout, stderr, exitCode } = await gitExec(args, cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { diff: stdout };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-push', async (_event, cwd: string, remote: string = 'origin', branch: string) => {
+  try {
+    const { stderr, exitCode } = await gitExec(['push', remote, branch], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-pull', async (_event, cwd: string, remote: string = 'origin', branch: string) => {
+  try {
+    const { stderr, exitCode } = await gitExec(['pull', remote, branch], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-fetch', async (_event, cwd: string) => {
+  try {
+    const { stderr, exitCode } = await gitExec(['fetch', '--all'], cwd);
+    if (exitCode !== 0) return { error: stderr };
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('git-remote', async (_event, cwd: string) => {
+  try {
+    const { stdout, stderr, exitCode } = await gitExec(['remote', '-v'], cwd);
+    if (exitCode !== 0) return { error: stderr || 'git remote failed' };
+    const remotes = stdout.split('\n').filter(Boolean).map((line) => {
+      const [name, url, type] = line.split(/\s+/);
+      return { name, url, type: type ? type.replace(/[()]/g, '') : '' };
+    });
+    return { remotes };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+// --- GitHub IPC Handlers ---
+
+const GITHUB_CONFIG_FILE = 'github-token.json';
+
+function getGithubConfigPath(): string {
+  return path.join(app.getPath('userData'), GITHUB_CONFIG_FILE);
+}
+
+function readGithubToken(): string | null {
+  try {
+    const configPath = getGithubConfigPath();
+    if (!fs.existsSync(configPath)) return null;
+    const data = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+    return data.token || null;
+  } catch { return null; }
+}
+
+function writeGithubToken(token: string): void {
+  const configPath = getGithubConfigPath();
+  fs.writeFileSync(configPath, JSON.stringify({ token }), 'utf-8');
+}
+
+async function githubFetch(path: string, token: string, options: RequestInit = {}): Promise<any> {
+  const res = await fetch(`https://api.github.com${path}`, {
+    ...options,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/vnd.github.v3+json',
+      'Content-Type': 'application/json',
+      'User-Agent': 'ultimate-editor',
+      ...options.headers,
+    },
+  });
+  const body: any = res.status === 204 ? null : await res.json();
+  if (!res.ok) throw new Error(body?.message || `GitHub API error ${res.status}`);
+  return body;
+}
+
+ipcMain.handle('github-get-token', async () => {
+  return { token: readGithubToken() };
+});
+
+ipcMain.handle('github-set-token', async (_event, token: string) => {
+  try {
+    writeGithubToken(token);
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-validate-token', async (_event, token: string) => {
+  try {
+    const user = await githubFetch('/user', token);
+    return { valid: true, user };
+  } catch (err: any) {
+    return { valid: false, error: err.message };
+  }
+});
+
+ipcMain.handle('github-user', async (_event, token: string) => {
+  try {
+    const user = await githubFetch('/user', token);
+    return { user };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-orgs', async (_event, token: string) => {
+  try {
+    const orgs = await githubFetch('/user/orgs', token);
+    return { orgs };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-user-repos', async (_event, token: string) => {
+  try {
+    let allRepos: any[] = [];
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const repos = await githubFetch(`/user/repos?per_page=100&page=${page}&sort=updated`, token);
+      allRepos = allRepos.concat(repos);
+      hasMore = repos.length === 100;
+      page++;
+    }
+    return { repos: allRepos };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-org-repos', async (_event, token: string, org: string) => {
+  try {
+    let allRepos: any[] = [];
+    let page = 1;
+    let hasMore = true;
+    while (hasMore) {
+      const repos = await githubFetch(`/orgs/${encodeURIComponent(org)}/repos?per_page=100&page=${page}&sort=updated`, token);
+      allRepos = allRepos.concat(repos);
+      hasMore = repos.length === 100;
+      page++;
+    }
+    return { repos: allRepos };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-clone', async (_event, url: string, destPath: string, token: string) => {
+  try {
+    const authenticatedUrl = url.replace('https://', `https://x-access-token:${token}@`);
+    return await new Promise<{ success?: boolean; error?: string }>((resolve) => {
+      exec(`git clone ${authenticatedUrl} "${destPath}"`, { timeout: 120000 }, (error, stdout, stderr) => {
+        if (error) resolve({ error: stderr || error.message });
+        else resolve({ success: true });
+      });
+    });
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-create-repo', async (_event, token: string, name: string, description: string, isPrivate: boolean) => {
+  try {
+    const repo = await githubFetch('/user/repos', token, {
+      method: 'POST',
+      body: JSON.stringify({ name, description, private: isPrivate, auto_init: true }),
+    });
+    return { repo };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-create-pr', async (_event, token: string, owner: string, repo: string, title: string, body: string, head: string, base: string) => {
+  try {
+    const pr = await githubFetch(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls`, token, {
+      method: 'POST',
+      body: JSON.stringify({ title, body, head, base }),
+    });
+    return { pr };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-list-prs', async (_event, token: string, owner: string, repo: string) => {
+  try {
+    const prs = await githubFetch(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/pulls?state=open&per_page=20`, token);
+    return { prs };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
+ipcMain.handle('github-list-branches', async (_event, token: string, owner: string, repo: string) => {
+  try {
+    const branches = await githubFetch(`/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/branches?per_page=50`, token);
+    return { branches };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+});
+
 // --- App Lifecycle ---
 
 app.whenReady().then(() => {
   createMenu();
   createWindow();
+
+  if (mainWindow) {
+    mainWindow.webContents.on('before-input-event', (_e, input) => {
+      if (input.type !== 'keyDown') return;
+      if (input.key === 'F12') {
+        mainWindow?.webContents.toggleDevTools();
+      }
+      if ((input.control || input.meta) && input.shift && input.key.toLowerCase() === 'p') {
+        mainWindow?.webContents.send('menu-action', 'command-palette');
+      }
+    });
+  }
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -367,6 +688,8 @@ app.whenReady().then(() => {
     }
   });
 });
+
+
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

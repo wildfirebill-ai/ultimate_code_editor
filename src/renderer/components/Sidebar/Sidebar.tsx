@@ -4,6 +4,7 @@ import { useEditorStore } from '../../stores/editorStore';
 import FileExplorer from './FileExplorer';
 import SearchPanel from './SearchPanel';
 import GitPanel from './GitPanel';
+import GitHubPanel from './GitHubPanel';
 import ExtensionsPanel from './ExtensionsPanel';
 import OllamaSettings from './OllamaSettings';
 
@@ -11,6 +12,7 @@ const viewLabels: Record<string, string> = {
   files: 'Files',
   search: 'Search',
   git: 'Source Control',
+  github: 'GitHub',
   extensions: 'Extensions',
   settings: 'Settings',
 };
@@ -47,6 +49,8 @@ const Sidebar: React.FC = () => {
         return <SearchPanel />;
       case 'git':
         return <GitPanel />;
+      case 'github':
+        return <GitHubPanel />;
       case 'extensions':
         return <ExtensionsPanel />;
       case 'settings':

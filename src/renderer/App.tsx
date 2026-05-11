@@ -73,7 +73,7 @@ export default function App() {
     const api = window.electronAPI;
     if (!api) return;
 
-    const handler = (_event: unknown, action: string) => {
+    const handler = (action: string) => {
       switch (action) {
         case 'open-file': handleOpenFile(); break;
         case 'open-folder': handleOpenFolder(); break;
