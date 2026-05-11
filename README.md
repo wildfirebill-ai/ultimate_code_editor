@@ -17,6 +17,7 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 - **File Explorer** — tree-based file navigation with
   create/rename/delete context menu
 - **Git Integration** — status, diff, staging, and commit workflow
+- **GitHub Integration** — token-based auth, dashboard, repository browser with pagination, org accordion, direct clone to workspace, create repo, and create PR
 - **Command Palette** — quick access to all editor actions
 - **Split Layout** — resizable sidebar, editor, terminal, and agent panels
 - **Cross-Platform** — Windows, macOS, and Linux builds via electron-builder
