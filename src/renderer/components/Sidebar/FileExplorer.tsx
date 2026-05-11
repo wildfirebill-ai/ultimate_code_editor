@@ -64,7 +64,8 @@ const FileItem: React.FC<FileItemProps> = ({
     if (!isDir || children.length > 0) return;
     setLoading(true);
     try {
-      const entries = await window.electronAPI.fileSystem.readDirectory(node.path);
+      const result = await window.electronAPI.fileSystem.readDirectory(node.path);
+      const entries = result.files || [];
       const mapped: FileNode[] = entries.map((e: any) => ({
         name: e.name,
         path: e.path,
@@ -118,7 +119,8 @@ const FileItem: React.FC<FileItemProps> = ({
       const parentPath = node.path.substring(0, node.path.lastIndexOf('\\'));
       const newPath = `${parentPath}\\${renameValue}`;
       await window.electronAPI.fileSystem.rename(node.path, newPath);
-      const entries = await window.electronAPI.fileSystem.readDirectory(parentPath);
+      const result = await window.electronAPI.fileSystem.readDirectory(parentPath);
+      const entries = result.files || [];
       const mapped: FileNode[] = entries.map((e: any) => ({
         name: e.name,
         path: e.path,
@@ -278,7 +280,8 @@ const FileExplorer: React.FC = () => {
   const loadWorkspace = useCallback(async () => {
     if (!workspacePath) return;
     try {
-      const entries = await window.electronAPI.fileSystem.readDirectory(workspacePath);
+      const result2 = await window.electronAPI.fileSystem.readDirectory(workspacePath);
+      const entries = result2.files || [];
       const mapped: FileNode[] = entries.map((e: any) => ({
         name: e.name,
         path: e.path,
@@ -334,7 +337,8 @@ const FileExplorer: React.FC = () => {
         if (data.content !== undefined) {
           openFile(newPath, data.content);
         }
-        const entries = await window.electronAPI.fileSystem.readDirectory(parentPath);
+        const result2 = await window.electronAPI.fileSystem.readDirectory(parentPath);
+        const entries = result2.files || [];
         const mapped: FileNode[] = entries.map((e: any) => ({
           name: e.name,
           path: e.path,
@@ -364,7 +368,8 @@ const FileExplorer: React.FC = () => {
       try {
         const newPath = `${parentPath}\\${name}`;
         await window.electronAPI.fileSystem.createDirectory(newPath);
-        const entries = await window.electronAPI.fileSystem.readDirectory(parentPath);
+        const result2 = await window.electronAPI.fileSystem.readDirectory(parentPath);
+        const entries = result2.files || [];
         const mapped: FileNode[] = entries.map((e: any) => ({
           name: e.name,
           path: e.path,
@@ -403,7 +408,8 @@ const FileExplorer: React.FC = () => {
           await window.electronAPI.fileSystem.deleteFile(node.path);
         }
         const parentPath = node.path.substring(0, node.path.lastIndexOf('\\'));
-        const entries = await window.electronAPI.fileSystem.readDirectory(parentPath);
+        const result2 = await window.electronAPI.fileSystem.readDirectory(parentPath);
+        const entries = result2.files || [];
         const mapped: FileNode[] = entries.map((e: any) => ({
           name: e.name,
           path: e.path,
