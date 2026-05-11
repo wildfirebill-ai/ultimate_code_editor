@@ -75,6 +75,13 @@ resources/      App icon and assets
 scripts/        Extension data processing
 ```
 
+## Security
+
+- **GitHub Token** — stored in Electron's `userData` directory (`github-token.json`), isolated from the project directory. The token is only passed to the main process via IPC and never exposed to the renderer beyond session scoping.
+- **Git Operations** — `git clone`, `git push`, and related commands are executed via `child_process.exec` in the main process. The clone URL and destination path are interpolated into shell commands. Repo names containing shell metacharacters could theoretically alter execution. All git operations run with user-level privileges.
+- **CSP** — Content Security Policy restricts script sources to `'self'`, `'unsafe-inline'`, and `'unsafe-eval'` (required by Monaco Editor). External images are allowed only from `https://avatars.githubusercontent.com` for GitHub avatars.
+- **IPC Surface** — All file system, git, and GitHub operations are mediated through explicit IPC handlers in the main process. The renderer has no direct access to Node.js APIs.
+
 ## License
 
 MIT — see [LICENSE](./license/LICENSE). Third-party component licenses
