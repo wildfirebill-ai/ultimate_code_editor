@@ -1,7 +1,7 @@
 {
   "name": "ultimate-editor",
   "version": "1.0.0",
-  "author": "Ultimate Code Editor",
+  "author": "Wildfirebill <ue.dev@wildfirebill.vip>",
   "description": "The Ultimate Code Editor - combining the best features from VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE",
   "main": "dist/main/main.js",
   "scripts": {
