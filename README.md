@@ -30,7 +30,7 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 | ![Extension Marketplace](screenshots/extensions.png) | ![Integrated Terminal](screenshots/terminal.png) |
 | ![File Explorer](screenshots/explorer.png) | ![Git Integration](screenshots/git.png) |
 | ![Command Palette](screenshots/command-palette.png) | ![Split Layout](screenshots/split-layout.png) |
-| ![Settings](screenshots/settings.png) | ![Dark Theme](screenshots/dark-theme.png) |
+| ![Settings](screenshots/settings.png) | ![GitHub](screenshots/github.png) |
 
 ## Tech Stack
 
