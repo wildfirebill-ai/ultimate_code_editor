@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Bot, Network, Plug, RefreshCw, CheckCircle2, XCircle, Loader2, Settings2, ExternalLink, FolderOpen, BarChart3, Globe, Key, Eye, EyeOff, Edit3, Pencil, Plus, Save, X, Download, Trash2, Search } from 'lucide-react';
-import { useAIStore, API_PROVIDER_DEFAULTS } from '../../stores/aiStore';
+import { useAIStore, API_PROVIDER_DEFAULTS, PROVIDER_LABELS } from '../../stores/aiStore';
 import { useSettingsStore } from '../../stores/settingsStore';
 import TokenUsage from './TokenUsage';
 
@@ -154,26 +154,9 @@ const OllamaSettings: React.FC = () => {
               <span style={labelStyle}><Globe size={14} /> Provider</span>
               <select style={{ ...inputStyle, width: 160, cursor: 'pointer' }} value={apiConfig.provider}
                 onChange={(e) => updateApiConfig({ provider: e.target.value as any })}>
-                <option value="openai">OpenAI</option>
-                <option value="anthropic">Anthropic</option>
-                <option value="groq">Groq</option>
-                <option value="mistral">Mistral</option>
-                <option value="deepseek">DeepSeek</option>
-                <option value="google">Google (Gemini)</option>
-                <option value="together">Together AI</option>
-                <option value="openrouter">OpenRouter</option>
-                <option value="perplexity">Perplexity</option>
-                <option value="cohere">Cohere</option>
-                <option value="github">GitHub Models</option>
-                <option value="xai">xAI (Grok)</option>
-                <option value="huggingface">Hugging Face</option>
-                <option value="replicate">Replicate</option>
-                <option value="anyscale">Anyscale</option>
-                <option value="deepinfra">DeepInfra</option>
-                <option value="nomic">Nomic</option>
-                <option value="octoai">OctoAI</option>
-                <option value="clarifai">Clarifai</option>
-                <option value="custom">Custom (OpenAI-compat)</option>
+                {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
               </select>
             </div>
             <div style={rowStyle}>
