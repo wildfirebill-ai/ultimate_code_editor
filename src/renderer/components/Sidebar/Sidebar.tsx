@@ -5,6 +5,7 @@ import FileExplorer from './FileExplorer';
 import SearchPanel from './SearchPanel';
 import GitPanel from './GitPanel';
 import GitHubPanel from './GitHubPanel';
+import FTPPanel from './FTPPanel';
 import ExtensionsPanel from './ExtensionsPanel';
 import OllamaSettings from './OllamaSettings';
 
@@ -13,6 +14,7 @@ const viewLabels: Record<string, string> = {
   search: 'Search',
   git: 'Source Control',
   github: 'GitHub',
+  ftp: 'FTP',
   extensions: 'Extensions',
   settings: 'Settings',
 };
@@ -51,6 +53,8 @@ const Sidebar: React.FC = () => {
         return <GitPanel />;
       case 'github':
         return <GitHubPanel />;
+      case 'ftp':
+        return <FTPPanel />;
       case 'extensions':
         return <ExtensionsPanel />;
       case 'settings':

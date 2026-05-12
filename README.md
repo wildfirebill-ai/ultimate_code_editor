@@ -19,7 +19,12 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 - **File Explorer** — tree-based file navigation with
   create/rename/delete context menu
 - **Git Integration** — status, diff, staging, and commit workflow
-- **GitHub Integration** — token-based auth, dashboard, repository browser with pagination, org accordion, direct clone to workspace, create repo, and create PR
+- **GitHub Integration** — token-based auth, dashboard,
+  repository browser with pagination, org accordion,
+  direct clone to workspace, create repo, and create PR
+- **FTP / SFTP** — remote file browser with connect/disconnect,
+  directory tree navigation, upload, download, mkdir, delete,
+  and drag-and-drop via sidebar panel
 - **Command Palette** — quick access to all editor actions
 - **Split Layout** — resizable sidebar, editor, terminal, and agent panels
 - **Cross-Platform** — Windows, macOS, and Linux builds via electron-builder
@@ -27,7 +32,7 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 ## Screenshots
 
 | | |
-|---|---|
+| --- | --- |
 | ![Editor](screenshots/editor.png) | ![AI Agent](screenshots/agent.png) |
 | ![Extension Marketplace](screenshots/extensions.png) | ![Integrated Terminal](screenshots/terminal.png) |
 | ![File Explorer](screenshots/explorer.png) | ![Git Integration](screenshots/git.png) |
@@ -46,6 +51,7 @@ VS Code, Zed, Continue.dev, Tabby, Roo Code, Aider, and Void IDE.
 ## Getting Started
 
 ### Local Development
+
 ```bash
 # Install dependencies
 npm install
@@ -64,16 +70,19 @@ npm run dist:linux  # Linux
 
 ### Try in GitHub Codespaces
 
-Click the badge above to open the repo in a Codespace. After the environment is ready:
+Click the badge above to open the repo in a Codespace.
+After the environment is ready:
 
 ```bash
 # Start the Vite dev server (auto-runs in Codespaces)
 npm run dev:renderer
 ```
 
-The Vite dev server starts on port 5173 — Codespaces will prompt to open it in your browser.
+The Vite dev server starts on port 5173 — Codespaces will
+prompt to open it in your browser.
 
 **What works in Codespaces:**
+
 - Monaco editor UI with syntax highlighting
 - Tab management (open/close/switch files)
 - Welcome screen with Open File / Open Folder / New File buttons
@@ -81,6 +90,7 @@ The Vite dev server starts on port 5173 — Codespaces will prompt to open it in
 - Split layout rendering
 
 **What does NOT work in Codespaces (requires Electron runtime):**
+
 - File system operations (reading/writing local files)
 - Git operations (status, diff, commit, push/pull)
 - GitHub integration (token auth, clone, create repo, PR)
@@ -91,9 +101,7 @@ The Vite dev server starts on port 5173 — Codespaces will prompt to open it in
 
 ## Project Structure
 
-```
-src/
-  main/         Electron main process
+```text
   preload/      Context bridge (preload scripts)
   renderer/     React UI
     components/  UI components (Editor, Sidebar, Terminal, etc.)
@@ -105,18 +113,44 @@ resources/      App icon and assets
 scripts/        Extension data processing
 ```
 
+## Privacy
+
+Ultimate Editor collects **zero telemetry**. No analytics SDKs,
+no usage tracking, no data collection of any kind. Everything
+runs locally on your machine.
+
 ## Security
 
-- **GitHub Token** — stored in Electron's `userData` directory (`github-token.json`), isolated from the project directory. The token is only passed to the main process via IPC and never exposed to the renderer beyond session scoping.
-- **Git Operations** — `git clone`, `git push`, and related commands are executed via `child_process.exec` in the main process. The clone URL and destination path are interpolated into shell commands. Repo names containing shell metacharacters could theoretically alter execution. All git operations run with user-level privileges.
-- **CSP** — Content Security Policy restricts script sources to `'self'`, `'unsafe-inline'`, and `'unsafe-eval'` (required by Monaco Editor). External images are allowed only from `https://avatars.githubusercontent.com` for GitHub avatars.
-- **IPC Surface** — All file system, git, and GitHub operations are mediated through explicit IPC handlers in the main process. The renderer has no direct access to Node.js APIs.
+- **GitHub Token** — stored in Electron's `userData` directory
+  (`github-token.json`), isolated from the project directory.
+  The token is only passed to the main process via IPC and
+  never exposed to the renderer beyond session scoping.
+- **Git Operations** — `git clone`, `git push`, and related
+  commands are executed via `child_process.exec` in the main
+  process. The clone URL and destination path are interpolated
+  into shell commands. Repo names containing shell metacharacters
+  could theoretically alter execution. All git operations run
+  with user-level privileges.
+- **CSP** — Content Security Policy restricts script sources to
+  `'self'`, `'unsafe-inline'`, and `'unsafe-eval'` (required by
+  Monaco Editor). External images are allowed only from
+  `https://avatars.githubusercontent.com` for GitHub avatars.
+- **IPC Surface** — All file system, git, and GitHub operations
+  are mediated through explicit IPC handlers in the main process.
+  The renderer has no direct access to Node.js APIs.
 
 ## Reporting Issues
 
-- **Bug reports** — use the [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md). Include your OS, app version, and steps to reproduce.
-- **Feature requests** — use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md). Describe the problem, your proposed solution, and how it fits with existing features.
-- **Security vulnerabilities** — do not file a public issue. Instead, contact the maintainers directly through the GitHub security advisory process.
+- **Bug reports** — use the
+  [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md).
+  Include your OS, app version, and steps to reproduce.
+- **Feature requests** — use the
+  [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md).
+  Describe the problem, your proposed solution, and how it fits
+  with existing features.
+- **Security vulnerabilities** — do not file a public issue.
+  Instead, contact the maintainers directly through the GitHub
+  security advisory process.
 
 ## License
 

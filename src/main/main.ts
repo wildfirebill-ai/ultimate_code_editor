@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain, Menu, dialog, shell, screen } from 'electr
 import * as path from 'path';
 import * as fs from 'fs';
 import { exec } from 'child_process';
+import * as net from 'net';
+import SFTPClient from 'ssh2-sftp-client';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -493,6 +495,350 @@ ipcMain.handle('git-remote', async (_event, cwd: string) => {
     return { remotes };
   } catch (err: any) {
     return { error: err.message };
+  }
+});
+
+// --- FTP IPC Handlers (raw net module) ---
+
+interface RawFtpClient {
+  socket: net.Socket;
+  host: string;
+  port: number;
+  user: string;
+}
+
+let activeFtp: RawFtpClient | null = null;
+let activeSftp: SFTPClient | null = null;
+let ftpBuffer = '';
+
+/** Extract the next complete FTP response line from the buffer.
+ *  Only final lines (3 digits + space) are returned;
+ *  intermediate multi-line lines (3 digits + hyphen) are skipped. */
+function shiftFtpLine(buf: string): { line: string; rest: string } | null {
+  const idx = buf.indexOf('\n');
+  if (idx === -1) return null;
+  const line = buf.substring(0, idx).replace(/\r$/, '');
+  const rest = buf.substring(idx + 1);
+  if (line.match(/^\d{3} /)) return { line, rest };
+  return shiftFtpLine(rest);
+}
+
+/** Wait for the next complete FTP response line on the given socket. */
+function awaitFtpResponse(socket: net.Socket, timeoutMs = 15000): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const existing = shiftFtpLine(ftpBuffer);
+    if (existing) {
+      ftpBuffer = existing.rest;
+      resolve(existing.line);
+      return;
+    }
+    const timer = setTimeout(() => {
+      socket.removeListener('data', onData);
+      reject(new Error('FTP response timed out'));
+    }, timeoutMs);
+    const onData = (data: Buffer) => {
+      ftpBuffer += data.toString('utf-8');
+      const result = shiftFtpLine(ftpBuffer);
+      if (result) {
+        ftpBuffer = result.rest;
+        clearTimeout(timer);
+        socket.removeListener('data', onData);
+        resolve(result.line);
+      }
+    };
+    socket.on('data', onData);
+  });
+}
+
+async function ftpSendCmd(client: RawFtpClient, cmd: string): Promise<string> {
+  const existing = shiftFtpLine(ftpBuffer);
+  if (existing) { ftpBuffer = existing.rest; return existing.line; }
+  client.socket.write(cmd + '\r\n');
+  return awaitFtpResponse(client.socket);
+}
+
+async function ftpPasv(client: RawFtpClient): Promise<net.Socket> {
+  const resp = await ftpSendCmd(client, 'PASV');
+  console.log('PASV response:', JSON.stringify(resp));
+  const m = resp.match(/\((\d+),(\d+),(\d+),(\d+),(\d+),(\d+)\)/);
+  if (!m) throw new Error('Failed to parse PASV response');
+  const ip = `${m[1]}.${m[2]}.${m[3]}.${m[4]}`;
+  const port = parseInt(m[5]) * 256 + parseInt(m[6]);
+  console.log('PASV data addr:', ip, 'port:', port);
+  return new Promise((resolve, reject) => {
+    const dataSocket = new net.Socket();
+    dataSocket.connect(port, ip, () => resolve(dataSocket));
+    dataSocket.on('error', reject);
+  });
+}
+
+const FTP_FILE_ENTRY = /^([drwxlst\-]{10})\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\w+\s+\d+\s+[\d:]+)\s+(.+)$/;
+const FTP_FILE_ENTRY_NUMERIC = /^([drwxlst\-]{10})\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\w+\s+\d+\s+[\d:]+)\s+(.+)$/;
+const FTP_MLSD_LINE = /^([^;]+(?:;[^;]+)*); (.+)$/;
+
+function parseFtpList(text: string): { name: string; isDirectory: boolean; isFile: boolean; size: number; modifiedAt: string }[] {
+  const results: { name: string; isDirectory: boolean; isFile: boolean; size: number; modifiedAt: string }[] = [];
+  for (const rawLine of text.split('\n')) {
+    const line = rawLine.replace(/\r$/, '');
+    if (!line || line === '.' || line === '..') continue;
+    // Unix ls -l
+    let m = line.match(FTP_FILE_ENTRY);
+    if (!m) m = line.match(FTP_FILE_ENTRY_NUMERIC);
+    if (m) {
+      results.push({
+        name: m[4],
+        isDirectory: m[1][0] === 'd',
+        isFile: m[1][0] === '-',
+        size: parseInt(m[2]) || 0,
+        modifiedAt: m[3],
+      });
+      continue;
+    }
+    // MLSD (RFC 3659)
+    m = line.match(FTP_MLSD_LINE);
+    if (m) {
+      const facts = m[1].split(';');
+      const factMap: Record<string, string> = {};
+      for (const f of facts) {
+        const eq = f.indexOf('=');
+        if (eq !== -1) factMap[f.substring(0, eq).trim()] = f.substring(eq + 1).trim();
+      }
+      results.push({
+        name: m[2],
+        isDirectory: factMap.type === 'dir',
+        isFile: factMap.type === 'file',
+        size: parseInt(factMap.size) || 0,
+        modifiedAt: factMap.modify || '',
+      });
+      continue;
+    }
+    console.log('parseFtpList: UNMATCHED line:', JSON.stringify(line));
+  }
+  console.log('parseFtpList: lines', text.split('\n').length, 'matched', results.length);
+  return results;
+}
+
+ipcMain.handle('ftp-connect', async (_event, host: string, port: number, user: string, password: string) => {
+  try {
+    if (activeFtp) { activeFtp.socket.destroy(); activeFtp = null; }
+    ftpBuffer = '';
+    const socket = new net.Socket();
+    await new Promise<void>((resolve, reject) => {
+      socket.connect(port, host, () => resolve());
+      socket.on('error', reject);
+      setTimeout(() => reject(new Error('Connection timed out')), 15000);
+    });
+    const client: RawFtpClient = { socket, host, port, user };
+    await awaitFtpResponse(socket);
+    const userResp = await ftpSendCmd(client, `USER ${user}`);
+    if (userResp.startsWith('5')) throw new Error(`Login failed: ${userResp}`);
+    const passResp = await ftpSendCmd(client, `PASS ${password}`);
+    if (passResp.startsWith('5')) throw new Error(`Login failed: ${passResp}`);
+    activeFtp = client;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-disconnect', async () => {
+  try {
+    if (activeFtp) { activeFtp.socket.destroy(); activeFtp = null; }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-list', async (_event, dirPath: string) => {
+  try {
+    if (!activeFtp) throw new Error('Not connected');
+    const dataSocket = await ftpPasv(activeFtp);
+    const listCmd = dirPath ? `LIST ${dirPath}` : 'LIST';
+    await ftpSendCmd(activeFtp, listCmd);
+    const chunks: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      dataSocket.on('data', (c: Buffer) => chunks.push(c));
+      dataSocket.on('end', resolve);
+      dataSocket.on('error', reject);
+      setTimeout(() => reject(new Error('Data socket timed out')), 30000);
+    });
+    dataSocket.destroy();
+    const resp = await awaitFtpResponse(activeFtp.socket);
+    if (resp.startsWith('5')) throw new Error(`Server error: ${resp}`);
+    const text = Buffer.concat(chunks).toString('utf-8');
+    console.log('FTP LIST raw text:', JSON.stringify(text));
+    const files = parseFtpList(text);
+    console.log('FTP LIST parsed count:', files.length);
+    return { success: true, files };
+  } catch (err: any) {
+    console.log('FTP LIST error:', err.message);
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-download', async (_event, remotePath: string, localPath: string) => {
+  try {
+    if (!activeFtp) throw new Error('Not connected');
+    const dataSocket = await ftpPasv(activeFtp);
+    await ftpSendCmd(activeFtp, `RETR ${remotePath}`);
+    const chunks: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      dataSocket.on('data', (c: Buffer) => chunks.push(c));
+      dataSocket.on('end', resolve);
+      dataSocket.on('error', reject);
+      setTimeout(() => reject(new Error('Data socket timed out')), 30000);
+    });
+    dataSocket.destroy();
+    const dloadResp = await awaitFtpResponse(activeFtp.socket);
+    if (dloadResp.startsWith('5')) throw new Error(`Server error: ${dloadResp}`);
+    fs.writeFileSync(localPath, Buffer.concat(chunks));
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-upload', async (_event, localPath: string, remotePath: string) => {
+  try {
+    if (!activeFtp) throw new Error('Not connected');
+    const content = fs.readFileSync(localPath);
+    const dataSocket = await ftpPasv(activeFtp);
+    await ftpSendCmd(activeFtp, `STOR ${remotePath}`);
+    dataSocket.write(content);
+    dataSocket.end();
+    await new Promise((resolve) => dataSocket.on('close', resolve));
+    const uploadResp = await awaitFtpResponse(activeFtp.socket);
+    if (uploadResp.startsWith('5')) throw new Error(`Server error: ${uploadResp}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-mkdir', async (_event, dirPath: string) => {
+  try {
+    if (!activeFtp) throw new Error('Not connected');
+    const mkdirResp = await ftpSendCmd(activeFtp, `MKD ${dirPath}`);
+    if (mkdirResp.startsWith('5')) throw new Error(`Server error: ${mkdirResp}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-remove', async (_event, remotePath: string) => {
+  try {
+    if (!activeFtp) throw new Error('Not connected');
+    const removeResp = await ftpSendCmd(activeFtp, `DELE ${remotePath}`);
+    if (removeResp.startsWith('5')) throw new Error(`Server error: ${removeResp}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('ftp-remove-dir', async (_event, remotePath: string) => {
+  try {
+    if (!activeFtp) throw new Error('Not connected');
+    const rmdResp = await ftpSendCmd(activeFtp, `RMD ${remotePath}`);
+    if (rmdResp.startsWith('5')) throw new Error(`Server error: ${rmdResp}`);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+// --- SFTP IPC Handlers (ssh2-sftp-client) ---
+
+ipcMain.handle('sftp-connect', async (_event, host: string, port: number, user: string, password: string) => {
+  try {
+    if (activeSftp) { await activeSftp.end(); activeSftp = null; }
+    const client = new SFTPClient();
+    await client.connect({ host, port, username: user, password });
+    activeSftp = client;
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-disconnect', async () => {
+  try {
+    if (activeSftp) { await activeSftp.end(); activeSftp = null; }
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-list', async (_event, dirPath: string) => {
+  try {
+    if (!activeSftp) throw new Error('Not connected');
+    const list = await activeSftp.list(dirPath || '.');
+    return {
+      success: true,
+      files: list.map((entry) => ({
+        name: entry.name,
+        path: (dirPath ? dirPath + '/' : '') + entry.name,
+        isDirectory: entry.type === 'd',
+        isFile: entry.type === '-',
+        size: entry.size,
+        modifiedAt: entry.modifyTime ? new Date(entry.modifyTime * 1000).toISOString() : '',
+      })),
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-download', async (_event, remotePath: string, localPath: string) => {
+  try {
+    if (!activeSftp) throw new Error('Not connected');
+    await activeSftp.fastGet(remotePath, localPath);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-upload', async (_event, localPath: string, remotePath: string) => {
+  try {
+    if (!activeSftp) throw new Error('Not connected');
+    await activeSftp.fastPut(localPath, remotePath);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-mkdir', async (_event, dirPath: string) => {
+  try {
+    if (!activeSftp) throw new Error('Not connected');
+    await activeSftp.mkdir(dirPath, true);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-remove', async (_event, remotePath: string) => {
+  try {
+    if (!activeSftp) throw new Error('Not connected');
+    await activeSftp.delete(remotePath);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('sftp-remove-dir', async (_event, remotePath: string) => {
+  try {
+    if (!activeSftp) throw new Error('Not connected');
+    await activeSftp.rmdir(remotePath, true);
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 });
 

@@ -51,6 +51,28 @@ const electronAPI = {
     remote: (cwd: string) => ipcRenderer.invoke('git-remote', cwd),
   },
 
+  ftp: {
+    connect: (host: string, port: number, user: string, password: string) => ipcRenderer.invoke('ftp-connect', host, port, user, password),
+    disconnect: () => ipcRenderer.invoke('ftp-disconnect'),
+    list: (dirPath?: string) => ipcRenderer.invoke('ftp-list', dirPath || ''),
+    download: (remotePath: string, localPath: string) => ipcRenderer.invoke('ftp-download', remotePath, localPath),
+    upload: (localPath: string, remotePath: string) => ipcRenderer.invoke('ftp-upload', localPath, remotePath),
+    mkdir: (dirPath: string) => ipcRenderer.invoke('ftp-mkdir', dirPath),
+    remove: (remotePath: string) => ipcRenderer.invoke('ftp-remove', remotePath),
+    removeDir: (remotePath: string) => ipcRenderer.invoke('ftp-remove-dir', remotePath),
+  },
+
+  sftp: {
+    connect: (host: string, port: number, user: string, password: string) => ipcRenderer.invoke('sftp-connect', host, port, user, password),
+    disconnect: () => ipcRenderer.invoke('sftp-disconnect'),
+    list: (dirPath?: string) => ipcRenderer.invoke('sftp-list', dirPath || ''),
+    download: (remotePath: string, localPath: string) => ipcRenderer.invoke('sftp-download', remotePath, localPath),
+    upload: (localPath: string, remotePath: string) => ipcRenderer.invoke('sftp-upload', localPath, remotePath),
+    mkdir: (dirPath: string) => ipcRenderer.invoke('sftp-mkdir', dirPath),
+    remove: (remotePath: string) => ipcRenderer.invoke('sftp-remove', remotePath),
+    removeDir: (remotePath: string) => ipcRenderer.invoke('sftp-remove-dir', remotePath),
+  },
+
   github: {
     getToken: () => ipcRenderer.invoke('github-get-token'),
     setToken: (token: string) => ipcRenderer.invoke('github-set-token', token),
